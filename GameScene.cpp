@@ -2,6 +2,7 @@
 #include "cocos2d.h"
 #include <algorithm>
 #include "SimpleAudioEngine.h"
+#include "cocostudio/CocoStudio.h"
 #include <regex>
 using std::regex;
 using std::match_results;
@@ -30,6 +31,8 @@ bool GameScene::init() {
 		return false;
 	}
 
+    isShield = false;
+
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	visibleHeight = visibleSize.height;
 	visibleWidth = visibleSize.width;
@@ -54,22 +57,22 @@ bool GameScene::init() {
 
 	treeLeft = Sprite::create("tree.png");
 	treeLeft->setPosition(Vec2(0, treeRootLeft->getContentSize().height + treeLeft->getContentSize().height / 2));
-	treeLeft->setScaleY(visibleHeight / treeLeft->getContentSize().height);
+	//treeLeft->setScaleY(visibleHeight / treeLeft->getContentSize().height);
 	this->addChild(treeLeft, 1);
 
 	treeLeft1 = Sprite::create("tree.png");
-	treeLeft1->setPosition(Vec2(0, treeRootLeft->getContentSize().height + treeLeft1->getContentSize().height / 2));
-	treeLeft1->setScaleY( visibleHeight / treeLeft1->getContentSize().height);
+	treeLeft1->setPosition(Vec2(0, treeRootLeft->getContentSize().height + treeLeft1->getContentSize().height / 2 + treeLeft->getContentSize().height));
+	//treeLeft1->setScaleY( visibleHeight / treeLeft1->getContentSize().height);
 	this->addChild(treeLeft1, 1);
 
 	treeRight = Sprite::create("tree.png");
-	treeRight->setScaleY(visibleHeight / treeRight->getContentSize().height);
+	//treeRight->setScaleY(visibleHeight / treeRight->getContentSize().height);
 	treeRight->setPosition(Vec2(visibleSize.width, treeRootRight->getContentSize().height + treeRight->getContentSize().height / 2));
 	this->addChild(treeRight, 1);
 
 	treeRight1 = Sprite::create("tree.png");
-	treeRight1->setScaleY(visibleHeight / treeRight1->getContentSize().height);
-	treeRight1->setPosition(Vec2(visibleSize.width, treeRootRight->getContentSize().height + treeRight1->getContentSize().height / 2));
+	//treeRight1->setScaleY(visibleHeight / treeRight1->getContentSize().height);
+	treeRight1->setPosition(Vec2(visibleSize.width, treeRootRight->getContentSize().height + treeRight1->getContentSize().height / 2  + treeRight->getContentSize().height));
 	this->addChild(treeRight1, 1);
 	
 
@@ -78,12 +81,11 @@ bool GameScene::init() {
 	player = Sprite::createWithSpriteFrameName("ninja-run-0.png");
 	runAnimate = Animate::create(AnimationCache::getInstance()->getAnimation("ninjaRunAnimation"));
 	player->runAction(RepeatForever::create(runAnimate));
+	player->setAnchorPoint(Vec2(0.5, 0.5));
 	runAnimate->setTag(0);
-	
 
-
-	player->setPosition(Vec2(treeRootLeft->getContentSize().width / 2 - 10 + player->getContentSize().width / 2, visibleSize.height / 4));
-	this->addChild(player, 1, "ninja");
+	player->setPosition(Vec2(player->getContentSize().width + 2, visibleSize.height / 4));
+	this->addChild(player, 2);
 	side = 'l';
 
 //ÈËÎïÅÜ¶¯µÄ¾àÀëµÃ·Ö£º
@@ -93,14 +95,34 @@ bool GameScene::init() {
 	score_->setPosition(Vec2(visibleWidth / 2, visibleHeight - 30));
 	this->addChild(score_);
 
-	schedule(schedule_selector(GameScene::BackGround));//±³¾°¹ö¶¯
+//Start Game
+    button = Button::create();
+    button->setTitleText("Start Game");
+    button->setTitleFontSize(30);
+    button->setPosition(Size(visibleWidth / 2, visibleHeight / 2));
+    this->addChild(button, 2);
+
+    button->addClickEventListener(CC_CALLBACK_1(GameScene::menuChangeitem, this));
+
+
 	addTouchListener();//Êó±êµã»÷ÊÂ¼þ
-	schedule(schedule_selector(GameScene::createObstacle), 4.0f, kRepeatForever, 0);//Ìí¼ÓÕÏ°­Îï
-	schedule(schedule_selector(GameScene::collision), 0.5f, kRepeatForever, 0);//ÅÐ¶ÏÅö×²
+	schedule(schedule_selector(GameScene::obstacleCollision), 0.5f, kRepeatForever, 0);//ÅÐ¶ÏÕÏ°­ÎïÅö×²
+	schedule(schedule_selector(GameScene::shieldCollision), 0.5f, kRepeatForever, 0);//ÅÐ¶Ï¶ÜÅÆÅö×²
 	obstacleList = Array::create();
 	obstacleList->retain();
+    shieldList = Array::create();
+    shieldList->retain();
 	
 	return true;
+}
+
+//Start Game
+void GameScene::menuChangeitem(Ref*pSender) {
+
+//    schedule(schedule_selector(GameScene::createObstacle), 4.0f, kRepeatForever, 0);//
+    schedule(schedule_selector(GameScene::createShield), 6.0f, kRepeatForever, 0);//±£»¤ÕÖ
+    schedule(schedule_selector(GameScene::BackGround));//±³¾°¹ö¶¯
+    button->setVisible(false);
 }
 //±³¾°¹ö¶¯
 void GameScene::BackGround(float dt) {
@@ -140,34 +162,102 @@ void GameScene::BackGround(float dt) {
 			cocos2d::log("a obstacle removed");
 		}
 	}
+    //·À»¤ÕÖ¹ö¶¯
+    for (int i = shieldList->count() - 1; i >= 0; i--)
+    {
+        auto s = (Sprite*)shieldList->getObjectAtIndex(i);
+        s->setPositionY(s->getPositionY() - 8);
+        if (s->getPositionY() < -s->getContentSize().height / 2)
+        {
+            shieldList->removeObjectAtIndex(i);
+            this->removeChild(s);
+            cocos2d::log("a shield removed");
+        }
+    }
+
 }
 
 //Ìí¼ÓÕÏ°­
 void GameScene::createObstacle(float dt) {
-	Sprite* left = Sprite::create("obstacle_l.png");
+    Sprite* left = Sprite::create("obstacle_l.png");
 	Sprite* right = Sprite::create("obstacle_r.png");
 	obstacleList->addObject(left);
 	obstacleList->addObject(right);
-	left->setPosition(5, visibleHeight - 20);
-	right->setPosition(visibleWidth - 5, visibleHeight - 400);
+	// modified
+    left->setPosition(treeLeft->getContentSize().width / 2 - 5 + left->getContentSize().width / 2, visibleHeight + 200);
+	right->setPosition(visibleWidth - treeRight->getContentSize().width / 2 + 5 - right->getContentSize().width / 2, visibleHeight-300);
+    // modified
 	this->addChild(left,1);
 	this->addChild(right,1);
 }
+//Ìí¼Ó·À»¤ÕÖ
+void GameScene::createShield(float dt)
+{
+    Sprite* left = Sprite::create("shield.png");
+    Sprite* right = Sprite::create("shield.png");
+    shieldList->addObject(left);
+    shieldList->addObject(right);
+    // modified
+    left->setPosition(left->getContentSize().width,500);
+    right->setPosition(visibleWidth-left->getContentSize().width,400);
+    // modified
+    this->addChild(left, 1);
+    this->addChild(right, 1);
+}
 //ÅÐ¶ÏÅö×²
-void GameScene::collision(float dt) {
-	Rect temp = player->getBoundingBox();
+void GameScene::obstacleCollision(float dt) {
+
+    auto pos = player->getPosition();
+    Rect temp = Rect(pos.x - 10, pos.y - 10, pos.x + 10, pos.y + 10);
 	for (int i = 0; i < obstacleList->count(); i++)
 	{
+		
 		Sprite* obstacleSprite = (Sprite*)obstacleList->getObjectAtIndex(i);
-		bool pia = temp.intersectsRect(obstacleSprite->getBoundingBox());
+        auto pos = obstacleSprite->getPosition();
+        Rect box =  Rect(pos.x - 10, pos.y - 10, pos.x + 10, pos.y + 10);
+		bool pia = temp.intersectsRect(box);
 		if (pia == true)
 		{
+			if (isShield) {
+				debuff();
+				return;
+		    }
 			unscheduleAllSelectors();
 			break;
 		}
 	}
 }
+void GameScene::shieldCollision(float dt) {
+	auto pos = player->getPosition();
+	Rect temp = Rect(pos.x - 10, pos.y - 10, pos.x + 10, pos.y + 10);
+	for (int i = 0; i < shieldList->count(); i++)
+	{
+		Sprite* shieldSprite = (Sprite*)shieldList->getObjectAtIndex(i);
+		auto pos = shieldSprite->getPosition();
+		Rect box = Rect(pos.x - 10, pos.y - 10, pos.x + 10, pos.y + 10);
+		bool pia = temp.intersectsRect(box);
+		if (pia == true)
+		{
+			auto temp = shieldSprite;
+			shieldList->removeObject(temp);
+			this->removeChild(shieldSprite);
+			debuff();//ÒÆ³ýÖ®Ç°µÄ±£»¤¶Ü
+			buff();
+		}
+	}
+}
 
+void GameScene::buff() {
+	auto shieldOnPlayer=Sprite::create("shield.png");
+	shieldOnPlayer->setPosition(player->getPosition());
+	player->addChild(shieldOnPlayer, 0);
+	isShield = true;
+ }
+void GameScene::debuff()
+{
+	player->removeAllChildren();
+	isShield = false;
+}
 //Êó±êµã»÷ÊÂ¼þ
 void GameScene::addTouchListener() {
 	// Todo
@@ -187,7 +277,8 @@ bool GameScene::onTouchBegan(Touch *touch, Event *event) {
 	if (side == 'l') {
 		auto x = visibleWidth - player->getContentSize().width;
 		auto jumpAnimate = Animate::create(AnimationCache::getInstance()->getAnimation("ninjaJumpAnimation"));
-		auto spawn = Spawn::createWithTwoActions(MoveTo::create(1.2f, Vec2(x, player->getPositionY())), jumpAnimate);
+		auto spawn = Spawn::createWithTwoActions(MoveTo::create(0.48f, Vec2(x, player->getPositionY())), jumpAnimate);
+
 		bool& jumping = isJumping;
 		auto seq = Sequence::create(spawn, CallFunc::create([&]() {
 			player->setFlipX(true);
@@ -201,7 +292,8 @@ bool GameScene::onTouchBegan(Touch *touch, Event *event) {
 	else if (side == 'r') {
 		auto x = player->getContentSize().width + 2;
 		auto jumpAnimate = Animate::create(AnimationCache::getInstance()->getAnimation("ninjaJumpAnimation"));
-		auto spawn = Spawn::createWithTwoActions(MoveTo::create(1.2f, Vec2(x, player->getPositionY())), jumpAnimate);
+		auto spawn = Spawn::createWithTwoActions(MoveTo::create(0.48f, Vec2(x, player->getPositionY())), jumpAnimate);
+     
 		bool& jumping = isJumping;
 		auto seq = Sequence::create(spawn, CallFunc::create([&]() {
 			player->setFlipX(false);

@@ -1,9 +1,10 @@
 #include "AppDelegate.h"
-#include "LoginScene.h"
+#include "GameScene.h"
+
 
 USING_NS_CC;
 
-static cocos2d::Size designResolutionSize = cocos2d::Size(700, 800);
+static cocos2d::Size designResolutionSize = cocos2d::Size(600, 768);
 static cocos2d::Size smallResolutionSize = cocos2d::Size(480, 320);
 static cocos2d::Size mediumResolutionSize = cocos2d::Size(1024, 768);
 static cocos2d::Size largeResolutionSize = cocos2d::Size(2048, 1536);
@@ -51,7 +52,6 @@ bool AppDelegate::applicationDidFinishLaunching() {
 	FileUtils::getInstance()->addSearchPath("res");
 
 	// create a scene. it's an autorelease object
-	auto scene = LoginScene::createScene();
 
 	// load game resource
 	auto spriteCache = SpriteFrameCache::getInstance();
@@ -77,10 +77,13 @@ bool AppDelegate::applicationDidFinishLaunching() {
 		sprintf(frameName, "ninja-jump-%d.png", i);
 		jumpAnimation->addSpriteFrame(spriteCache->getSpriteFrameByName(frameName));
 	}
-	jumpAnimation->setDelayPerUnit(0.05);
+	jumpAnimation->setDelayPerUnit(0.02);
 	AnimationCache::getInstance()->addAnimation(jumpAnimation, "ninjaJumpAnimation");
 
+    auto i = AnimationCache::getInstance();
+
 	// run
+    auto scene = GameScene::createScene();
 	director->runWithScene(scene);
 
 	return true;

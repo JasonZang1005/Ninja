@@ -1,4 +1,6 @@
 #include "cocos2d.h"
+#include "ui/CocosGUI.h"
+using namespace cocos2d::ui;
 using namespace cocos2d;
 
 using std::string;
@@ -16,10 +18,14 @@ public:
 
 	void addTouchListener();
 	void createObstacle(float dt);
-	void collision(float dt);
+    void createShield(float dt);
+	void obstacleCollision(float dt);
+	void shieldCollision(float dt);
 	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
 	void onTouchEnded(cocos2d::Touch *touch, cocos2d::Event *event);
-
+    void menuChangeitem(Ref * pSender);
+	void buff();//player with shield
+	void debuff();//player without shield
 
 	char side;//记录上一次player所在边
 
@@ -40,10 +46,14 @@ private:
 	cocos2d::Sprite* scenery;
 	cocos2d::Sprite* player;
 	cocos2d::Sprite* sky;
+    Button* button;
 	Animate* jumpAnimate;
 	Animate* runAnimate;
 	bool isJumping;
+    bool isShield;
 	int score;
 	cocos2d::Label* score_;
-	Array* obstacleList;//障碍物
+    cocos2d::Sprite* CurrentShield;
+	Array* obstacleList;//障碍
+    Array* shieldList;//保护罩
 };
