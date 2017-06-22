@@ -26,6 +26,8 @@ public:
     void menuChangeitem(Ref * pSender);
 	void buff();//player with shield
 	void debuff();//player without shield
+	void createMonsterAndRope(float);
+	
 
 	char side;//记录上一次player所在边
 
@@ -56,4 +58,9 @@ private:
     cocos2d::Sprite* CurrentShield;
 	Array* obstacleList;//障碍
     Array* shieldList;//保护罩
+	Array* monsterList;//怪物
+	Array* ropeList;//绳子
+//	cocos2d::Vector<int*> isDead;//记录有多少怪物死亡
+	cocos2d::Vector<SpriteFrame*> monsterDead;
+    
 };

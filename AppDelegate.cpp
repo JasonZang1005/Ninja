@@ -82,6 +82,8 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     auto i = AnimationCache::getInstance();
 
+	//load monster dead animation
+	
 	// run
     auto scene = GameScene::createScene();
 	director->runWithScene(scene);

@@ -75,6 +75,14 @@ bool GameScene::init() {
 	treeRight1->setPosition(Vec2(visibleSize.width, treeRootRight->getContentSize().height + treeRight1->getContentSize().height / 2  + treeRight->getContentSize().height));
 	this->addChild(treeRight1, 1);
 	
+	/* monster dead animation */
+	auto texture = Director::getInstance()->getTextureCache()->addImage("Monster.png");
+	monsterDead.reserve(4);
+	for (int i = 0; i < 4; i++) {
+		auto frame = SpriteFrame::createWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(Rect(258 - 48 * i, 0, 42, 42)));
+		monsterDead.pushBack(frame);
+	}
+
 
 //人物：
 
@@ -104,23 +112,26 @@ bool GameScene::init() {
 
     button->addClickEventListener(CC_CALLBACK_1(GameScene::menuChangeitem, this));
 
-
-	addTouchListener();//鼠标点击事件
 	schedule(schedule_selector(GameScene::obstacleCollision), 0.5f, kRepeatForever, 0);//判断障碍物碰撞
 	schedule(schedule_selector(GameScene::shieldCollision), 0.5f, kRepeatForever, 0);//判断盾牌碰撞
 	obstacleList = Array::create();
 	obstacleList->retain();
     shieldList = Array::create();
     shieldList->retain();
-	
+	monsterList = Array::create();
+	monsterList->retain();
+	ropeList = Array::create();
+	ropeList->retain();
+
 	return true;
 }
 
 //Start Game
 void GameScene::menuChangeitem(Ref*pSender) {
-
-//    schedule(schedule_selector(GameScene::createObstacle), 4.0f, kRepeatForever, 0);//
+	addTouchListener();//鼠标点击事件
+    schedule(schedule_selector(GameScene::createObstacle), 4.0f, kRepeatForever, 0);//障碍
     schedule(schedule_selector(GameScene::createShield), 6.0f, kRepeatForever, 0);//保护罩
+	schedule(schedule_selector(GameScene::createMonsterAndRope), 6.0f, kRepeatForever, 0);//怪物与绳子
     schedule(schedule_selector(GameScene::BackGround));//背景滚动
     button->setVisible(false);
 }
@@ -174,6 +185,29 @@ void GameScene::BackGround(float dt) {
             cocos2d::log("a shield removed");
         }
     }
+	for (int i = monsterList->count() - 1; i >= 0; i--)
+	{
+		auto s = (Sprite*)monsterList->getObjectAtIndex(i);
+		s->setPositionY(s->getPositionY() - 8);
+		s->setPositionX(s->getPositionX() - 4);
+		if (s->getPositionY() < -s->getContentSize().height / 2)
+		{
+			monsterList->removeObjectAtIndex(i);
+			this->removeChild(s);
+			cocos2d::log("a monster removed");
+		}
+	}
+	for (int i = ropeList->count() - 1; i >= 0; i--)
+	{
+		auto s = (Sprite*)ropeList->getObjectAtIndex(i);
+		s->setPositionY(s->getPositionY() - 8);
+		if (s->getPositionY() < -s->getContentSize().height / 2)
+		{
+			ropeList->removeObjectAtIndex(i);
+			this->removeChild(s);
+			cocos2d::log("a rope removed");
+		}
+	}
 
 }
 
@@ -184,8 +218,8 @@ void GameScene::createObstacle(float dt) {
 	obstacleList->addObject(left);
 	obstacleList->addObject(right);
 	// modified
-    left->setPosition(treeLeft->getContentSize().width / 2 - 5 + left->getContentSize().width / 2, visibleHeight + 200);
-	right->setPosition(visibleWidth - treeRight->getContentSize().width / 2 + 5 - right->getContentSize().width / 2, visibleHeight-300);
+    left->setPosition(treeLeft->getContentSize().width / 2 - 5 + left->getContentSize().width / 2, visibleHeight + 300);
+	right->setPosition(visibleWidth - treeRight->getContentSize().width / 2 + 5 - right->getContentSize().width / 2, visibleHeight+600);
     // modified
 	this->addChild(left,1);
 	this->addChild(right,1);
@@ -193,16 +227,34 @@ void GameScene::createObstacle(float dt) {
 //添加防护罩
 void GameScene::createShield(float dt)
 {
-    Sprite* left = Sprite::create("shield.png");
-    Sprite* right = Sprite::create("shield.png");
-    shieldList->addObject(left);
-    shieldList->addObject(right);
+	Sprite* middle = Sprite::create("shield.png");
+    shieldList->addObject(middle);
     // modified
-    left->setPosition(left->getContentSize().width,500);
-    right->setPosition(visibleWidth-left->getContentSize().width,400);
+    middle->setPosition(visibleWidth/2,visibleHeight+300);
     // modified
-    this->addChild(left, 1);
-    this->addChild(right, 1);
+    this->addChild(middle, 1);
+}
+//创造怪物
+void GameScene::createMonsterAndRope(float dt)
+{
+	auto rope = Sprite::create("rope.png");
+	rope->setPosition(visibleWidth / 2, visibleHeight - 100);
+	this->addChild(rope, 1);
+	auto monster = Sprite::create("Monster.png", CC_RECT_PIXELS_TO_POINTS(Rect(364, 0, 42, 42)));
+	monster->setPosition(visibleWidth - 100, rope->getPositionY() + 30);
+	this->addChild(monster, 1);
+	int x = 0;
+//	isDead.pushBack(&x);
+	monsterList->addObject(monster);
+	ropeList->addObject(rope);
+	/* monster dead animation */
+	//auto texture = Director::getInstance()->getTextureCache()->addImage("Monster.png");
+	//monsterDead.reserve(4);
+	//for (int i = 0; i < 4; i++) {
+	//    auto frame = SpriteFrame::createWithTexture(texture, CC_RECT_PIXELS_TO_POINTS(Rect(258 - 48 * i, 0, 42, 42)));
+	//    monsterDead.pushBack(frame);
+	//}
+	
 }
 //判断碰撞
 void GameScene::obstacleCollision(float dt) {
@@ -219,6 +271,7 @@ void GameScene::obstacleCollision(float dt) {
 		if (pia == true)
 		{
 			if (isShield) {
+				this->removeChild(obstacleSprite, true);
 				debuff();
 				return;
 		    }
@@ -249,8 +302,10 @@ void GameScene::shieldCollision(float dt) {
 
 void GameScene::buff() {
 	auto shieldOnPlayer=Sprite::create("shield.png");
-	shieldOnPlayer->setPosition(player->getPosition());
-	player->addChild(shieldOnPlayer, 0);
+    // modified
+	shieldOnPlayer->setPosition(player->getContentSize().width / 2, player->getContentSize().height / 2);
+    // modified
+    player->addChild(shieldOnPlayer, 0);
 	isShield = true;
  }
 void GameScene::debuff()
@@ -307,6 +362,8 @@ bool GameScene::onTouchBegan(Touch *touch, Event *event) {
 	
 	return true;
 }
+
+
 
 void GameScene::onTouchEnded(Touch *touch, Event *event) {
 
