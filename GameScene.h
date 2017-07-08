@@ -1,4 +1,4 @@
-#include "cocos2d.h"
+ï»¿#include "cocos2d.h"
 #include "ui/CocosGUI.h"
 using namespace cocos2d::ui;
 using namespace cocos2d;
@@ -15,23 +15,27 @@ public:
 	virtual bool init();
 
 	void BackGround(float dt);
-
+	void killmonster(float dt);
+	void randomcreate(float dt);
 	void addTouchListener();
 	void createObstacle(float dt);
-    void createShield(float dt);
+	void createShield(float dt);
 	void obstacleCollision(float dt);
 	void shieldCollision(float dt);
 	bool onTouchBegan(cocos2d::Touch *touch, cocos2d::Event *event);
 	void onTouchEnded(cocos2d::Touch *touch, cocos2d::Event *event);
-    void menuChangeitem(Ref * pSender);
+	void menuChangeitem(Ref * pSender);
 	void buff();//player with shield
 	void debuff();//player without shield
 	void createMonsterAndRope(float);
-	
+	void DaZhao(int i);
+	void removeWudi(float);
+	void backgroundPositionSub(Sprite*,int);
+	void removeCollisionLizi(float);
 
-	char side;//¼ÇÂ¼ÉÏÒ»´ÎplayerËùÔÚ±ß
+	char side;//è®°å½•ä¸Šä¸€æ¬¡playeræ‰€åœ¨è¾¹
 
-	// implement the "static create()" method manually
+			  // implement the "static create()" method manually
 	CREATE_FUNC(GameScene);
 
 
@@ -48,19 +52,22 @@ private:
 	cocos2d::Sprite* scenery;
 	cocos2d::Sprite* player;
 	cocos2d::Sprite* sky;
-    Button* button;
+	Button* button;
 	Animate* jumpAnimate;
 	Animate* runAnimate;
 	bool isJumping;
-    bool isShield;
+	bool killone=true;
+	bool isShield;
 	int score;
+	int height;
 	cocos2d::Label* score_;
-    cocos2d::Sprite* CurrentShield;
-	Array* obstacleList;//ÕÏ°­
-    Array* shieldList;//±£»¤ÕÖ
-	Array* monsterList;//¹ÖÎï
-	Array* ropeList;//Éş×Ó
-//	cocos2d::Vector<int*> isDead;//¼ÇÂ¼ÓĞ¶àÉÙ¹ÖÎïËÀÍö
+	cocos2d::Label* height_;
+	cocos2d::Sprite* CurrentShield;
+	Array* obstacleList;//éšœç¢
+	Array* shieldList;//ä¿æŠ¤ç½©
+	Array* monsterList;//æ€ªç‰©
+	Array* ropeList;//ç»³å­
+					//	cocos2d::Vector<int*> isDead;//è®°å½•æœ‰å¤šå°‘æ€ªç‰©æ­»äº¡
 	cocos2d::Vector<SpriteFrame*> monsterDead;
-    
+
 };
